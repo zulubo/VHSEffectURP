@@ -1,0 +1,198 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8766771955022815622
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 221518ef91623a7438a71fef23660601, type: 3}
+  m_Name: WhiteBalance
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.WhiteBalance
+  active: 0
+  temperature:
+    m_OverrideState: 0
+    m_Value: -20.1
+  tint:
+    m_OverrideState: 0
+    m_Value: 0
+--- !u!114 &-8126195040302295217
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66f335fb1ffd8684294ad653bf1c7564, type: 3}
+  m_Name: ColorAdjustments
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.ColorAdjustments
+  active: 1
+  postExposure:
+    m_OverrideState: 1
+    m_Value: 0.44
+  contrast:
+    m_OverrideState: 0
+    m_Value: 0
+  colorFilter:
+    m_OverrideState: 0
+    m_Value: {r: 1, g: 1, b: 1, a: 1}
+  hueShift:
+    m_OverrideState: 0
+    m_Value: 0
+  saturation:
+    m_OverrideState: 0
+    m_Value: 0
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7fd9488000d3734a9e00ee676215985, type: 3}
+  m_Name: pfx Profile(URP)
+  m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.VolumeProfile
+  components:
+  - {fileID: 1053997473328591205}
+  - {fileID: -8766771955022815622}
+  - {fileID: -8126195040302295217}
+  - {fileID: 5083015311227338406}
+--- !u!114 &1053997473328591205
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97c23e3b12dc18c42a140437e53d3951, type: 3}
+  m_Name: Tonemapping
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.Tonemapping
+  active: 1
+  mode:
+    m_OverrideState: 1
+    m_Value: 2
+  neutralHDRRangeReductionMode:
+    m_OverrideState: 0
+    m_Value: 2
+  acesPreset:
+    m_OverrideState: 0
+    m_Value: 3
+  hueShiftAmount:
+    m_OverrideState: 0
+    m_Value: 0
+  detectPaperWhite:
+    m_OverrideState: 0
+    m_Value: 0
+  paperWhite:
+    m_OverrideState: 0
+    m_Value: 300
+  detectBrightnessLimits:
+    m_OverrideState: 0
+    m_Value: 1
+  minNits:
+    m_OverrideState: 0
+    m_Value: 0.005
+  maxNits:
+    m_OverrideState: 0
+    m_Value: 1000
+--- !u!114 &4085842515105288478
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e59a00505c9fc194989e062d7aeaa589, type: 3}
+  m_Name: VHSVolumeComponent
+  m_EditorClassIdentifier: Assembly-CSharp::VHSVolumeComponent
+  active: 1
+  intensity:
+    m_OverrideState: 1
+    m_Value: 1
+  colorBleedingIntensity:
+    m_OverrideState: 0
+    m_Value: 0.5
+  colorBleedRadius:
+    m_OverrideState: 0
+    m_Value: 0.5
+  colorBleedDirection:
+    m_OverrideState: 0
+    m_Value: 0
+  smearIntensity:
+    m_OverrideState: 0
+    m_Value: 0
+  grainIntensity:
+    m_OverrideState: 0
+    m_Value: 0.1
+  grainScale:
+    m_OverrideState: 0
+    m_Value: 0.1
+  stripeNoiseDensity:
+    m_OverrideState: 1
+    m_Value: 0.968
+  stripeNoiseOpacity:
+    m_OverrideState: 1
+    m_Value: 1
+  edgeIntensity:
+    m_OverrideState: 0
+    m_Value: 0.5
+  edgeDistance:
+    m_OverrideState: 0
+    m_Value: 0.002
+--- !u!114 &5083015311227338406
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e59a00505c9fc194989e062d7aeaa589, type: 3}
+  m_Name: VHSVolumeComponent
+  m_EditorClassIdentifier: Assembly-CSharp::VHSVolumeComponent
+  active: 1
+  intensity:
+    m_OverrideState: 1
+    m_Value: 1
+  colorBleedingIntensity:
+    m_OverrideState: 0
+    m_Value: 0.5
+  colorBleedRadius:
+    m_OverrideState: 0
+    m_Value: 0.5
+  colorBleedDirection:
+    m_OverrideState: 0
+    m_Value: 0
+  smearIntensity:
+    m_OverrideState: 0
+    m_Value: 0
+  grainIntensity:
+    m_OverrideState: 0
+    m_Value: 0.1
+  grainScale:
+    m_OverrideState: 0
+    m_Value: 0.1
+  stripeNoiseDensity:
+    m_OverrideState: 1
+    m_Value: 0.629
+  stripeNoiseOpacity:
+    m_OverrideState: 1
+    m_Value: 1
+  edgeIntensity:
+    m_OverrideState: 0
+    m_Value: 0.5
+  edgeDistance:
+    m_OverrideState: 0
+    m_Value: 0.002
