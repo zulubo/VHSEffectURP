@@ -3,6 +3,8 @@ I found myself disappointed with a lot of VHS style post effects in games, they 
 
 This version has been rewritten for the Universal Render Pipeline. It uses the new Render Graph API, and was built in Unity 6000.2.62f2. I cannot guarantee it will work in earlier versions.
 
+[Click here for the Built In Render Pipeline version](https://github.com/zulubo/VHSEffectURP)
+
 ![screenshot](/Assets/Samples/screenshot.png)
 
 The elements of this effect are:
