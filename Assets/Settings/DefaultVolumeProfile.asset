@@ -43,7 +43,7 @@ MonoBehaviour:
   active: 1
   intensity:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 0
   colorBleedingIntensity:
     m_OverrideState: 1
     m_Value: 0.5
@@ -53,15 +53,15 @@ MonoBehaviour:
   colorBleedDirection:
     m_OverrideState: 1
     m_Value: 0
-  smearIntensity:
-    m_OverrideState: 1
-    m_Value: 0
-  grainIntensity:
-    m_OverrideState: 1
-    m_Value: 0.1
   grainScale:
     m_OverrideState: 1
     m_Value: 0.1
+  grainIntensity:
+    m_OverrideState: 1
+    m_Value: 0.1
+  smearIntensity:
+    m_OverrideState: 1
+    m_Value: 0
   stripeNoiseDensity:
     m_OverrideState: 1
     m_Value: 0.1
@@ -74,6 +74,15 @@ MonoBehaviour:
   edgeDistance:
     m_OverrideState: 1
     m_Value: 0.002
+  crtSize:
+    m_OverrideState: 1
+    m_Value: 1
+  crtPixelIntensity:
+    m_OverrideState: 1
+    m_Value: 0
+  crtScanLineIntensity:
+    m_OverrideState: 1
+    m_Value: 0
 --- !u!114 &-6885919266263874892
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -412,7 +421,6 @@ MonoBehaviour:
   - {fileID: -3262821530444183102}
   - {fileID: 9138227717608783140}
   - {fileID: -7240674311438567743}
-  - {fileID: 3723017039087362713}
 --- !u!114 &1176690302846788049
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -854,15 +862,15 @@ MonoBehaviour:
   colorBleedDirection:
     m_OverrideState: 0
     m_Value: 0
-  smearIntensity:
-    m_OverrideState: 0
-    m_Value: 0
-  grainIntensity:
-    m_OverrideState: 0
-    m_Value: 0.1
   grainScale:
     m_OverrideState: 0
     m_Value: 0.1
+  grainIntensity:
+    m_OverrideState: 0
+    m_Value: 0.1
+  smearIntensity:
+    m_OverrideState: 0
+    m_Value: 0
   stripeNoiseDensity:
     m_OverrideState: 0
     m_Value: 0.1
@@ -875,6 +883,15 @@ MonoBehaviour:
   edgeDistance:
     m_OverrideState: 0
     m_Value: 0.002
+  crtSize:
+    m_OverrideState: 0
+    m_Value: 1
+  crtPixelIntensity:
+    m_OverrideState: 0
+    m_Value: 0
+  crtScanLineIntensity:
+    m_OverrideState: 0
+    m_Value: 0
 --- !u!114 &9138227717608783140
 MonoBehaviour:
   m_ObjectHideFlags: 3

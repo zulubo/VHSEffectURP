@@ -1,14 +1,41 @@
 using System.Collections.Generic;
-using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
-using UnityEngine.Rendering.PostProcessing;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
 
 public sealed class VHSRendererFeature : ScriptableRendererFeature
 {
+    private static class ShaderIDs
+    {
+        public static readonly int HorizontalNoise = Shader.PropertyToID("_HorizontalNoise");
+        public static readonly int HorizontalNoisePos = Shader.PropertyToID("_HorizontalNoisePos");
+        public static readonly int HorizontalNoisePower = Shader.PropertyToID("_HorizontalNoisePower");
+        public static readonly int StripeNoise = Shader.PropertyToID("_StripeNoise");
+        public static readonly int StripeNoiseScaleOffset = Shader.PropertyToID("_StripeNoiseScaleOffset");
+        public static readonly int OddScale = Shader.PropertyToID("_OddScale");
+        public static readonly int BlurBias = Shader.PropertyToID("_BlurBias");
+        public static readonly int NoiseOpacity = Shader.PropertyToID("_NoiseOpacity");
+        public static readonly int Noise = Shader.PropertyToID("_Noise");
+        public static readonly int UpsampleBlend = Shader.PropertyToID("_UpsampleBlend");
+        public static readonly int TexelSize = Shader.PropertyToID("_TexelSize");
+        public static readonly int SmearOffsetAttenuation = Shader.PropertyToID("_SmearOffsetAttenuation");
+        public static readonly int ColorBleedIntensity = Shader.PropertyToID("_ColorBleedIntensity");
+        public static readonly int Grain = Shader.PropertyToID("_Grain");
+        public static readonly int GrainIntensity = Shader.PropertyToID("_GrainIntensity");
+        public static readonly int GrainScaleOffset = Shader.PropertyToID("_GrainScaleOffset");
+        public static readonly int EdgeIntensity = Shader.PropertyToID("_EdgeIntensity");
+        public static readonly int EdgeDistance = Shader.PropertyToID("_EdgeDistance");
+        public static readonly int BlurredTex = Shader.PropertyToID("_BlurredTex");
+        public static readonly int SmearedTex = Shader.PropertyToID("_SmearedTex");
+        public static readonly int SmearIntensity = Shader.PropertyToID("_SmearIntensity");
+        public static readonly int Crt = Shader.PropertyToID("_CRT");
+        public static readonly int CrtScaleIntensity = Shader.PropertyToID("_CRTScaleIntensity");
+        public static readonly int BlitScaleBias = Shader.PropertyToID("_BlitScaleBias");
+        public static readonly int BlitTexture = Shader.PropertyToID("_BlitTexture");
+    }
+
     #region FEATURE_FIELDS
 
     private VHSPostRenderPass m_VHSPass;
@@ -91,15 +118,6 @@ public sealed class VHSRendererFeature : ScriptableRendererFeature
             }
         }
         private static  Texture2D _horizontalNoiseTex;
-        private static Texture2D speckNoiseTex
-        {
-            get
-            {
-                if (_speckNoiseTex == null) _speckNoiseTex = (Texture2D)Resources.Load("speckNoise", typeof(Texture2D));
-                return _speckNoiseTex;
-            }
-        }
-        private static Texture2D _speckNoiseTex;
         private static Texture2D stripeNoiseTex
         {
             get
@@ -109,12 +127,22 @@ public sealed class VHSRendererFeature : ScriptableRendererFeature
             }
         }
         private static Texture2D _stripeNoiseTex;
+        
+        private static Texture2D crtTex
+        {
+            get
+            {
+                if (_crtTex == null) _crtTex = (Texture2D)Resources.Load("vhsCRT", typeof(Texture2D));
+                return _crtTex;
+            }
+        }
+        private static Texture2D _crtTex;
 
         private static Material mat_blur
         {
             get
             {
-                if (_mat_blur == null) _mat_blur = new Material(Shader.Find("Hidden/VHSBlur"));
+                if (_mat_blur == null) _mat_blur = new Material(Shader.Find("Hidden/VHSBlurURP"));
                 return _mat_blur;
             }
         }
@@ -123,7 +151,7 @@ public sealed class VHSRendererFeature : ScriptableRendererFeature
         {
             get
             {
-                if (_mat_noiseGen == null) _mat_noiseGen = new Material(Shader.Find("Hidden/VHSNoiseGen"));
+                if (_mat_noiseGen == null) _mat_noiseGen = new Material(Shader.Find("Hidden/VHSNoiseGenURP"));
                 return _mat_noiseGen;
             }
         }
@@ -132,7 +160,7 @@ public sealed class VHSRendererFeature : ScriptableRendererFeature
         {
             get
             {
-                if (_mat_smear == null) _mat_smear = new Material(Shader.Find("Hidden/VHSSmear"));
+                if (_mat_smear == null) _mat_smear = new Material(Shader.Find("Hidden/VHSSmearURP"));
                 return _mat_smear;
             }
         }
@@ -141,7 +169,7 @@ public sealed class VHSRendererFeature : ScriptableRendererFeature
         {
             get
             {
-                if (_mat_composite == null) _mat_composite = new Material(Shader.Find("Hidden/VHSComposite"));
+                if (_mat_composite == null) _mat_composite = new Material(Shader.Find("Hidden/VHSCompositeURP"));
                 return _mat_composite;
             }
         }
@@ -150,14 +178,13 @@ public sealed class VHSRendererFeature : ScriptableRendererFeature
         private class VHSState
         {
             public float horizontalNoisePos;
+            public RenderTexture interlacingTexture;
+            private float lastRenderTime;
         }
         private static Dictionary<Camera, VHSState> cameraStates = new();
 
         private static int PyramidID(int i) => Shader.PropertyToID("_VHSPyramid" + i);
 
-        static readonly int noiseBuffer = Shader.PropertyToID("_NoiseBuffer");
-        static readonly int smearBuffer = Shader.PropertyToID("_SmearBuffer");
-        static readonly int smearBuffer2 = Shader.PropertyToID("_SmearBuffer2");
         #endregion
 
         public VHSPostRenderPass(string passName)
@@ -372,7 +399,9 @@ public sealed class VHSRendererFeature : ScriptableRendererFeature
             
             using (var builder = renderGraph.AddUnsafePass<CompositePassData>("VHS Composite", out var passData, profilingSampler))
             {
-                TextureHandle finalTexture = renderGraph.CreateTexture(vhsData.slightBlurTex.GetDescriptor(renderGraph));
+                //TextureDesc finalDesc = camTexDesc;//vhsData.slightBlurTex.GetDescriptor(renderGraph);
+                //TextureHandle finalTexture = renderGraph.CreateTexture(finalDesc);
+                passData.resolution = new Vector2Int(camTexDesc.width, camTexDesc.height);
 
                 passData.slightBlurredTex = vhsData.slightBlurTex;
                 builder.UseTexture(vhsData.slightBlurTex);
@@ -393,16 +422,19 @@ public sealed class VHSRendererFeature : ScriptableRendererFeature
                 passData.grainScale = myVolume.grainScale.GetValue<float>();
                 passData.edgeIntensity = myVolume.edgeIntensity.GetValue<float>() * myVolume.intensity.GetValue<float>();
                 passData.edgeDistance = myVolume.edgeDistance.GetValue<float>();
+                passData.crtSize = myVolume.crtSize.GetValue<float>();
+                passData.crtPixelIntensity = myVolume.crtPixelIntensity.GetValue<float>();
+                passData.crtScalineIntensity = myVolume.crtScanLineIntensity.GetValue<float>();
 
                 //builder.SetRenderAttachment(finalTexture, 0, AccessFlags.WriteAll);
-                builder.UseTexture(finalTexture, AccessFlags.WriteAll);
+                builder.UseTexture(resourcesData.cameraColor, AccessFlags.WriteAll);
 
-                passData.targetTex = finalTexture;
+                passData.targetTex = resourcesData.cameraColor;
                 
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc((CompositePassData data, UnsafeGraphContext context) => ExecuteCompositePass(data, context));
 
-                resourcesData.cameraColor = finalTexture;
+               // resourcesData.cameraColor = resourcesData.cameraColor;
             }
         }
         
@@ -418,12 +450,12 @@ public sealed class VHSRendererFeature : ScriptableRendererFeature
         }
         private static void ExecuteNoisePass(NoisePassData data, RasterGraphContext context)
         {
-            mat_noiseGen.SetTexture("_HorizontalNoise", horizontalNoiseTex);
-            mat_noiseGen.SetFloat("_HorizontalNoisePos", data.horizontalNoisePos);
+            mat_noiseGen.SetTexture(ShaderIDs.HorizontalNoise, horizontalNoiseTex);
+            mat_noiseGen.SetFloat(ShaderIDs.HorizontalNoisePos, data.horizontalNoisePos);
             float stripeNoiseDensity = data.stripeNoiseDensity;
-            mat_noiseGen.SetFloat("_HorizontalNoisePower", stripeNoiseDensity * stripeNoiseDensity);
-            mat_noiseGen.SetTexture("_StripeNoise", stripeNoiseTex);
-            mat_noiseGen.SetVector("_StripeNoiseScaleOffset", new Vector4(data.noiseTexWidth / (float)stripeNoiseTex.width, data.noiseTexHeight / (float)stripeNoiseTex.height, UnityEngine.Random.value, UnityEngine.Random.value));
+            mat_noiseGen.SetFloat(ShaderIDs.HorizontalNoisePower, stripeNoiseDensity * stripeNoiseDensity);
+            mat_noiseGen.SetTexture(ShaderIDs.StripeNoise, stripeNoiseTex);
+            mat_noiseGen.SetVector(ShaderIDs.StripeNoiseScaleOffset, new Vector4(data.noiseTexWidth / (float)stripeNoiseTex.width, data.noiseTexHeight / (float)stripeNoiseTex.height, UnityEngine.Random.value, UnityEngine.Random.value));
 
             Blitter.BlitTexture(context.cmd, Texture2D.blackTexture, new Vector4(1,1,0,0), mat_noiseGen, 0);
         }
@@ -455,20 +487,20 @@ public sealed class VHSRendererFeature : ScriptableRendererFeature
             // downsample and blur
             for (int i = 0; i < data.pyramid.Length; i++)
             {
-                MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
-                propertyBlock.SetVector("_OddScale", data.pyramid[i].oddScale);
-                propertyBlock.SetFloat("_BlurBias", data.blurBias);
+                MaterialPropertyBlock propertyBlock = context.renderGraphPool.GetTempMaterialPropertyBlock();
+                propertyBlock.SetVector(ShaderIDs.OddScale, data.pyramid[i].oddScale);
+                propertyBlock.SetFloat(ShaderIDs.BlurBias, data.blurBias);
 
                 if(i == 0)
                 {
                     // add noise to first downsample
-                    if(data.enableNoise) propertyBlock.SetTexture("_Noise", data.noiseTex);
-                    propertyBlock.SetFloat("_NoiseOpacity", data.noiseOpacity);
-                    CustomBlit(unsafeCmd, data.source, data.pyramid[i].texture, mat_blur, 0, propertyBlock);
+                    if(data.enableNoise) propertyBlock.SetTexture(ShaderIDs.Noise, data.noiseTex);
+                    propertyBlock.SetFloat(ShaderIDs.NoiseOpacity, data.noiseOpacity);
+                    CustomBlit(unsafeCmd, data.source, data.pyramid[i].texture, mat_blur, 0, propertyBlock, context);
                 }
                 else
                 {
-                    CustomBlit(unsafeCmd, data.pyramid[i - 1].texture, data.pyramid[i].texture, mat_blur, 1, propertyBlock);
+                    CustomBlit(unsafeCmd, data.pyramid[i - 1].texture, data.pyramid[i].texture, mat_blur, 1, propertyBlock, context);
                 }
             }
             
@@ -477,9 +509,9 @@ public sealed class VHSRendererFeature : ScriptableRendererFeature
             // second blur pyramid level receives the upsampled heavy blur (for chroma)
             for (int i = data.pyramid.Length - 2; i >= 1; i--)
             {
-                MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
-                propertyBlock.SetFloat("_UpsampleBlend", data.pyramid[i + 1].upsampleBlend);
-                CustomBlit(unsafeCmd, data.pyramid[i + 1].texture, data.pyramid[i].texture, mat_blur, 2, propertyBlock);
+                MaterialPropertyBlock propertyBlock = context.renderGraphPool.GetTempMaterialPropertyBlock();
+                propertyBlock.SetFloat(ShaderIDs.UpsampleBlend, data.pyramid[i + 1].upsampleBlend);
+                CustomBlit(unsafeCmd, data.pyramid[i + 1].texture, data.pyramid[i].texture, mat_blur, 2, propertyBlock, context);
             }
         }
         
@@ -494,19 +526,20 @@ public sealed class VHSRendererFeature : ScriptableRendererFeature
         {
             CommandBuffer unsafeCmd = CommandBufferHelpers.GetNativeCommandBuffer(context.cmd);
             
-            MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
-            propertyBlock.SetVector("_TexelSize", data.texelSize);
-            propertyBlock.SetVector("_SmearOffsetAttenuation", new Vector4(1, 0.3f));
-            CustomBlit(unsafeCmd, data.sourceTex, data.smearTex1, mat_smear, 0, propertyBlock);
+            MaterialPropertyBlock propertyBlock = context.renderGraphPool.GetTempMaterialPropertyBlock();
+            propertyBlock.SetVector(ShaderIDs.TexelSize, data.texelSize);
+            propertyBlock.SetVector(ShaderIDs.SmearOffsetAttenuation, new Vector4(1, 0.3f));
+            CustomBlit(unsafeCmd, data.sourceTex, data.smearTex1, mat_smear, 0, propertyBlock, context);
             
-            MaterialPropertyBlock propertyBlock2 = new MaterialPropertyBlock();
-            propertyBlock2.SetVector("_TexelSize", data.texelSize);
-            propertyBlock2.SetVector("_SmearOffsetAttenuation", new Vector4(5, 1.2f));
-            CustomBlit(unsafeCmd, data.smearTex1, data.smearTex2, mat_smear, 0, propertyBlock);
+            MaterialPropertyBlock propertyBlock2 = context.renderGraphPool.GetTempMaterialPropertyBlock();
+            propertyBlock2.SetVector(ShaderIDs.TexelSize, data.texelSize);
+            propertyBlock2.SetVector(ShaderIDs.SmearOffsetAttenuation, new Vector4(5, 1.2f));
+            CustomBlit(unsafeCmd, data.smearTex1, data.smearTex2, mat_smear, 0, propertyBlock, context);
         }
         
         private class CompositePassData
         {
+            public Vector2Int resolution;
             public TextureHandle targetTex;
             public TextureHandle slightBlurredTex;
             public TextureHandle blurredTex;
@@ -518,175 +551,41 @@ public sealed class VHSRendererFeature : ScriptableRendererFeature
             public float grainScale;
             public float edgeIntensity;
             public float edgeDistance;
+            public float crtSize;
+            public float crtPixelIntensity;
+            public float crtScalineIntensity;
         }
         private static void ExecuteCompositePass(CompositePassData data, UnsafeGraphContext context)
         {
             CommandBuffer unsafeCmd = CommandBufferHelpers.GetNativeCommandBuffer(context.cmd);
             
-            mat_composite.SetFloat("_ColorBleedIntensity", data.colorBleedIntensity);
-            mat_composite.SetTexture("_Grain", grainTex);
-            mat_composite.SetFloat("_GrainIntensity", data.grainIntensity);
-            mat_composite.SetVector("_GrainScaleOffset", new Vector4(0.6f * data.grainScale, data.grainScale, UnityEngine.Random.value, UnityEngine.Random.value));
-            mat_composite.SetFloat("_EdgeIntensity", data.edgeIntensity);
-            mat_composite.SetFloat("_EdgeDistance", -data.edgeDistance);
-            mat_composite.SetTexture("_BlurredTex", data.blurredTex);
-            if(data.enableSmearing) mat_composite.SetTexture("_SmearedTex", data.smearedTex);
-            mat_composite.SetFloat("_SmearIntensity", data.smearIntensity);
+            mat_composite.SetFloat(ShaderIDs.ColorBleedIntensity, data.colorBleedIntensity);
+            mat_composite.SetTexture(ShaderIDs.Grain, grainTex);
+            mat_composite.SetFloat(ShaderIDs.GrainIntensity, data.grainIntensity);
+            mat_composite.SetVector(ShaderIDs.GrainScaleOffset, new Vector4(0.6f * data.grainScale, data.grainScale, UnityEngine.Random.value, UnityEngine.Random.value));
+            mat_composite.SetFloat(ShaderIDs.EdgeIntensity, data.edgeIntensity);
+            mat_composite.SetFloat(ShaderIDs.EdgeDistance, -data.edgeDistance);
+            mat_composite.SetTexture(ShaderIDs.BlurredTex, data.blurredTex);
+            if(data.enableSmearing) mat_composite.SetTexture(ShaderIDs.SmearedTex, data.smearedTex);
+            mat_composite.SetFloat(ShaderIDs.SmearIntensity, data.smearIntensity);
+            mat_composite.SetTexture(ShaderIDs.Crt, crtTex);
+            mat_composite.SetVector(ShaderIDs.CrtScaleIntensity, new Vector4(data.resolution.x / (float)crtTex.width / data.crtSize, 
+                data.resolution.y / (float)crtTex.height / data.crtSize, 
+                data.crtPixelIntensity, data.crtScalineIntensity));
             unsafeCmd.SetRenderTarget(data.targetTex);
             Blitter.BlitTexture(context.cmd, data.slightBlurredTex, new Vector4(1,1,0,0), mat_composite, 0);
         }
 
         private static MaterialPropertyBlock customBlitPropertyBlock;
-        private static void CustomBlit(CommandBuffer cmd, TextureHandle source, TextureHandle dest, Material material, int pass, MaterialPropertyBlock propertyBlock)
+        private static void CustomBlit(CommandBuffer cmd, TextureHandle source, TextureHandle dest, Material material, int pass, MaterialPropertyBlock propertyBlock, UnsafeGraphContext context)
         {
-            if (propertyBlock == null) propertyBlock = new MaterialPropertyBlock();
-            propertyBlock.SetVector("_BlitScaleBias", new Vector4(1, 1, 0, 0));
-            propertyBlock.SetTexture("_BlitTexture", source);
+            if (propertyBlock == null) propertyBlock = context.renderGraphPool.GetTempMaterialPropertyBlock();
+            propertyBlock.SetVector(ShaderIDs.BlitScaleBias, new Vector4(1, 1, 0, 0));
+            propertyBlock.SetTexture(ShaderIDs.BlitTexture, source);
             cmd.SetRenderTarget(dest);
             cmd.DrawProcedural(Matrix4x4.identity, material, pass, MeshTopology.Triangles, 3, 1, propertyBlock);
         }
         
-        /*
-        private class BlurUpsamplePassData
-        {
-            public float blend;
-            public TextureHandle inputTex;
-        }
-        private static void BlurUpsamplePass(BlurUpsamplePassData data, RasterGraphContext context)
-        {
-            mat_downsample.SetFloat("_UpsampleBlend", data.blend);
-            Blitter.BlitTexture(context.cmd, data.inputTex, new Vector4(1,1,0,0), mat_downsample, 2);
-            
-        }
-        */
-        
-        
-        
-            /*
-        private static void ExecuteMainPass(MainPassData data, RasterGraphContext context)
-        {
-            
-            
-            // Clear the material properties.
-            s_SharedPropertyBlock.Clear();
-            if(sourceTexture != null)
-                s_SharedPropertyBlock.SetTexture(kBlitTexturePropertyId, sourceTexture);
-
-            // Set the scale and bias so shaders that use Blit.hlsl work correctly.
-            s_SharedPropertyBlock.SetVector(kBlitScaleBiasPropertyId, new Vector4(1, 1, 0, 0));
-
-            // Set the material properties based on the blended values of the custom volume.
-            // For more information, refer to https://docs.unity3d.com/Manual/urp/post-processing/custom-post-processing-with-volume.html
-            VHSVolumeComponent myVolume = VolumeManager.instance.stack?.GetComponent<VHSVolumeComponent>();
-            if (myVolume != null)
-                s_SharedPropertyBlock.SetFloat("_Intensity", myVolume.intensity.value);
-
-            // Draw to the current render target.
-            cmd.DrawProcedural(Matrix4x4.identity, material, 0, MeshTopology.Triangles, 3, 1, s_SharedPropertyBlock);
-            */
-            
-            /*
-            
-
-            float blurAmount = Mathf.Clamp(Mathf.Log(context.width * settings.colorBleedRadius * 0.25f, 2f), 3, 8);
-            int blurIterations = Mathf.FloorToInt(blurAmount);
-            
-            // create blur pyramid
-            if (blurPyramid == null || blurPyramid.Length != blurIterations) 
-            {
-                blurPyramid = new int[blurIterations];
-                for (int i = 0; i < blurIterations; i++)
-                {
-                    blurPyramid[i] = PyramidID(i);
-                }
-            }
-
-            int w = context.width;
-            int h = context.height;
-
-            // downsample
-            var downsampleSheet = context.propertySheets.Get(shader_downsample);
-            downsampleSheet.properties.SetFloat("_BlurBias", settings.colorBleedDirection);
-            for (int i = 0; i < blurIterations; i++)
-            {
-                downsampleSheet.properties.SetVector("_OddScale", GetOddScale(w,h));
-                w /= 2;
-                h /= 2;
-                
-                context.GetScreenSpaceTemporaryRT(context.command, blurPyramid[i], 0, context.sourceFormat, RenderTextureReadWrite.Default, FilterMode.Bilinear, w, h);
-
-                if(i == 0)
-                {
-                    if(enableNoise) context.command.SetGlobalTexture("_Noise", noiseBuffer);
-                    downsampleSheet.properties.SetFloat("_NoiseOpacity", settings.stripeNoiseOpacity);
-                    context.command.BlitFullscreenTriangle(context.source, blurPyramid[0], downsampleSheet, 0);
-                }
-                else
-                {
-                    context.command.BlitFullscreenTriangle(blurPyramid[i - 1], blurPyramid[i], downsampleSheet, 1);
-                }
-            }
-
-            // upsample
-            for (int i = blurIterations - 1; i > 2; i--)
-            {
-                float fac = 1;
-                if (i == blurIterations - 1)
-                {
-                    fac = blurAmount - blurIterations;
-                }
-                downsampleSheet.properties.SetFloat("_UpsampleBlend", 0.7f * fac);
-                context.command.BlitFullscreenTriangle(blurPyramid[i], blurPyramid[i - 1], downsampleSheet, 2);
-            }
-
-            // apply smearing
-            bool enableSmearing = settings.smearIntensity >  0;
-            if(enableSmearing)
-            {
-                int sw = Mathf.Min(640, Mathf.RoundToInt(context.width * 0.5f));
-                int sh = Mathf.Min(480, Mathf.RoundToInt(context.height * 0.5f));
-                context.GetScreenSpaceTemporaryRT(context.command, smearBuffer, 0, RenderTextureFormat.Default, RenderTextureReadWrite.Default, FilterMode.Bilinear, sw, sh);
-                context.GetScreenSpaceTemporaryRT(context.command, smearBuffer2, 0, RenderTextureFormat.Default, RenderTextureReadWrite.Default, FilterMode.Bilinear, sw, sh);
-                var smearSheet = context.propertySheets.Get(shader_smear);
-                smearSheet.properties.SetVector("_TexelSize", new Vector4(1f/sw, 1f/sh, sw, sh));
-                smearSheet.properties.SetVector("_SmearOffsetAttenuation", new Vector4(1, 0.3f));
-                context.command.BlitFullscreenTriangle(blurPyramid[1], smearBuffer, smearSheet, 0);
-                smearSheet.properties.SetVector("_SmearOffsetAttenuation", new Vector4(5, 1.2f));
-                context.command.BlitFullscreenTriangle(smearBuffer, smearBuffer2, smearSheet, 0);
-            }
-
-            var compositeSheet = context.propertySheets.Get(shader_composite);
-            compositeSheet.properties.SetFloat("_ColorBleedIntensity", settings.colorBleedingIntensity);
-            compositeSheet.properties.SetFloat("_BlurIntensity", settings.smearIntensity);
-            compositeSheet.properties.SetTexture("_Grain", grainTex);
-            compositeSheet.properties.SetFloat("_GrainIntensity", settings.grainIntensity);
-            compositeSheet.properties.SetVector("_GrainScaleOffset", new Vector4(0.6f * settings.grainScale, settings.grainScale, UnityEngine.Random.value, UnityEngine.Random.value));
-            if(enableNoise) context.command.SetGlobalTexture("_Noise", noiseBuffer);
-            compositeSheet.properties.SetFloat("_NoiseOpacity", settings.stripeNoiseOpacity);
-            compositeSheet.properties.SetFloat("_EdgeIntensity", settings.edgeIntensity);
-            compositeSheet.properties.SetFloat("_EdgeDistance", -settings.edgeDistance);
-            context.command.SetGlobalTexture("_VHSSlightBlurredTex", blurPyramid[1]);
-            context.command.SetGlobalTexture("_VHSBlurredTex", blurPyramid[2]);
-            if(enableSmearing) context.command.SetGlobalTexture("_VHSSmearedTex", smearBuffer2);
-            compositeSheet.properties.SetFloat("_SmearIntensity", settings.smearIntensity);
-            context.command.BlitFullscreenTriangle(blurPyramid[0], context.destination, compositeSheet, 0);
-
-            // clean up
-            for (int i = 0; i < blurPyramid.Length; i++)
-            {
-                context.command.ReleaseTemporaryRT(blurPyramid[i]);
-            }
-            if(enableNoise) 
-            {
-                context.command.ReleaseTemporaryRT(noiseBuffer);
-            }
-            if(enableSmearing)
-            {
-                context.command.ReleaseTemporaryRT(smearBuffer);
-                context.command.ReleaseTemporaryRT(smearBuffer2);
-            }
-        }
-            */
         
         private static Vector2 GetOddScale(int w, int h)
         {

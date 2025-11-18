@@ -1,24 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-8766771955022815622
-MonoBehaviour:
-  m_ObjectHideFlags: 3
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 221518ef91623a7438a71fef23660601, type: 3}
-  m_Name: WhiteBalance
-  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.WhiteBalance
-  active: 0
-  temperature:
-    m_OverrideState: 0
-    m_Value: -20.1
-  tint:
-    m_OverrideState: 0
-    m_Value: 0
 --- !u!114 &-8126195040302295217
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -34,7 +15,7 @@ MonoBehaviour:
   active: 1
   postExposure:
     m_OverrideState: 1
-    m_Value: 0.44
+    m_Value: 0.68
   contrast:
     m_OverrideState: 0
     m_Value: 0
@@ -45,6 +26,61 @@ MonoBehaviour:
     m_OverrideState: 0
     m_Value: 0
   saturation:
+    m_OverrideState: 0
+    m_Value: 0
+--- !u!114 &-1684952092891873109
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e59a00505c9fc194989e062d7aeaa589, type: 3}
+  m_Name: VHSVolumeComponent
+  m_EditorClassIdentifier: Assembly-CSharp::VHSVolumeComponent
+  active: 1
+  intensity:
+    m_OverrideState: 0
+    m_Value: 0
+  colorBleedingIntensity:
+    m_OverrideState: 0
+    m_Value: 0.5
+  colorBleedRadius:
+    m_OverrideState: 0
+    m_Value: 0.5
+  colorBleedDirection:
+    m_OverrideState: 0
+    m_Value: 0
+  grainScale:
+    m_OverrideState: 0
+    m_Value: 0.1
+  grainIntensity:
+    m_OverrideState: 0
+    m_Value: 0.1
+  smearIntensity:
+    m_OverrideState: 0
+    m_Value: 0
+  stripeNoiseDensity:
+    m_OverrideState: 0
+    m_Value: 0.1
+  stripeNoiseOpacity:
+    m_OverrideState: 0
+    m_Value: 1
+  edgeIntensity:
+    m_OverrideState: 0
+    m_Value: 0.5
+  edgeDistance:
+    m_OverrideState: 0
+    m_Value: 0.002
+  crtSize:
+    m_OverrideState: 0
+    m_Value: 1
+  crtPixelIntensity:
+    m_OverrideState: 0
+    m_Value: 0
+  crtScanLineIntensity:
     m_OverrideState: 0
     m_Value: 0
 --- !u!114 &11400000
@@ -61,9 +97,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.VolumeProfile
   components:
   - {fileID: 1053997473328591205}
-  - {fileID: -8766771955022815622}
   - {fileID: -8126195040302295217}
-  - {fileID: 5083015311227338406}
+  - {fileID: -1684952092891873109}
 --- !u!114 &1053997473328591205
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -129,15 +164,15 @@ MonoBehaviour:
   colorBleedDirection:
     m_OverrideState: 0
     m_Value: 0
-  smearIntensity:
-    m_OverrideState: 0
-    m_Value: 0
-  grainIntensity:
-    m_OverrideState: 0
-    m_Value: 0.1
   grainScale:
     m_OverrideState: 0
     m_Value: 0.1
+  grainIntensity:
+    m_OverrideState: 0
+    m_Value: 0.1
+  smearIntensity:
+    m_OverrideState: 0
+    m_Value: 0
   stripeNoiseDensity:
     m_OverrideState: 1
     m_Value: 0.968
@@ -150,49 +185,12 @@ MonoBehaviour:
   edgeDistance:
     m_OverrideState: 0
     m_Value: 0.002
---- !u!114 &5083015311227338406
-MonoBehaviour:
-  m_ObjectHideFlags: 3
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e59a00505c9fc194989e062d7aeaa589, type: 3}
-  m_Name: VHSVolumeComponent
-  m_EditorClassIdentifier: Assembly-CSharp::VHSVolumeComponent
-  active: 1
-  intensity:
-    m_OverrideState: 1
+  crtSize:
+    m_OverrideState: 0
     m_Value: 1
-  colorBleedingIntensity:
-    m_OverrideState: 1
-    m_Value: 1
-  colorBleedRadius:
-    m_OverrideState: 1
-    m_Value: 0.251
-  colorBleedDirection:
-    m_OverrideState: 1
-    m_Value: 0.341
-  smearIntensity:
-    m_OverrideState: 1
+  crtPixelIntensity:
+    m_OverrideState: 0
     m_Value: 0
-  grainIntensity:
-    m_OverrideState: 1
-    m_Value: 0.256
-  grainScale:
-    m_OverrideState: 1
-    m_Value: 0.944
-  stripeNoiseDensity:
-    m_OverrideState: 1
-    m_Value: 0.176
-  stripeNoiseOpacity:
-    m_OverrideState: 1
-    m_Value: 0.744
-  edgeIntensity:
-    m_OverrideState: 1
-    m_Value: 1.211
-  edgeDistance:
-    m_OverrideState: 1
-    m_Value: 0.00115
+  crtScanLineIntensity:
+    m_OverrideState: 0
+    m_Value: 0

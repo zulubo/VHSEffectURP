@@ -1,4 +1,4 @@
-Shader "Hidden/VHSSmear"
+Shader "Hidden/VHSSmearURP"
 {   
     SubShader
     {

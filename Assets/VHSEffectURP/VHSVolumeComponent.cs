@@ -17,21 +17,29 @@ public sealed class VHSVolumeComponent : VolumeComponent, IPostProcessComponent
     }
 
     [Tooltip("Overall intensity multiplier")]
-    public ClampedFloatParameter intensity = new ClampedFloatParameter(1f, 0f, 1f);
+    public ClampedFloatParameter intensity = new ClampedFloatParameter(0f, 0f, 1f);
     
+    [Header("Color Bleed")]
     public ClampedFloatParameter colorBleedingIntensity = new (0.5f, 0, 1);
     [Tooltip("Color bleed iterations")]
     public ClampedFloatParameter colorBleedRadius = new (0.5f, 0, 1);
     [Tooltip("Color bleed direction")]
     public ClampedFloatParameter colorBleedDirection = new (0.0f, -1, 1);
-    [Tooltip("Smear Intensity")]
-    public ClampedFloatParameter smearIntensity = new (0.0f, 0, 0.8f);
-    public ClampedFloatParameter grainIntensity = new (0.1f, 0, 1);
+    [Header("Grain")]
     public ClampedFloatParameter grainScale = new (0.1f, 0.01f, 2f);
+    public ClampedFloatParameter grainIntensity = new (0.1f, 0, 1);
+    [Header("Smearing")]
+    public ClampedFloatParameter smearIntensity = new (0.0f, 0, 0.8f);
+    [Header("Stripe Noise")]
     public ClampedFloatParameter stripeNoiseDensity = new (0.1f, 0, 1);
     public ClampedFloatParameter stripeNoiseOpacity = new (1f, 0, 1);
+    [Header("Edge Sharpening")]
     public ClampedFloatParameter edgeIntensity = new (0.5f, 0, 2);
     public ClampedFloatParameter edgeDistance = new (0.002f, 0f, 0.005f);
+    [Header("CRT Filter")] 
+    public FloatParameter crtSize = new(1);
+    public ClampedFloatParameter crtPixelIntensity = new (0f, 0, 1);
+    public ClampedFloatParameter crtScanLineIntensity = new (0f, 0, 1);
 
     public bool IsActive()
     {

@@ -1,4 +1,4 @@
-Shader "Hidden/VHSBlur"
+Shader "Hidden/VHSBlurURP"
 {   
     SubShader
     {
@@ -35,7 +35,9 @@ Shader "Hidden/VHSBlur"
                              + SAMPLE_TEXTURE2D(_BlitTexture, sampler_LinearClamp, input.texcoord + float2(offset.x, 0) + halfPixel)
                              + SAMPLE_TEXTURE2D(_BlitTexture, sampler_LinearClamp, input.texcoord + float2(0, 0) + halfPixel);
                 color *= 0.25;
-                color.rgb += SAMPLE_TEXTURE2D(_Noise, sampler_LinearClamp, input.texcoord).r * _NoiseOpacity;
+                float noise = SAMPLE_TEXTURE2D(_Noise, sampler_LinearClamp, input.texcoord).r;
+                noise = noise * noise * 3;
+                color.rgb += noise * _NoiseOpacity;
                 return color;
             }
             

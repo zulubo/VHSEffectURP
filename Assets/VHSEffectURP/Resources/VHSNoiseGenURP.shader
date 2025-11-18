@@ -1,4 +1,4 @@
-Shader "Hidden/VHSNoiseGen"
+Shader "Hidden/VHSNoiseGenURP"
 {   
     SubShader
     {
