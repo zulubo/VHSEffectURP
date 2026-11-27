@@ -295,7 +295,7 @@ public sealed class VHSRendererFeature : ScriptableRendererFeature
                 if (UnityEngine.Random.value < 0.01f) state.horizontalNoisePos += UnityEngine.Random.value;
                 state.horizontalNoisePos = Mathf.Repeat(state.horizontalNoisePos, 1);
                 
-                TextureDesc noiseDesc = new TextureDesc(new RenderTextureDescriptor(lrWidth, lrHeight, GraphicsFormat.R8_SNorm, 0));
+                TextureDesc noiseDesc = new TextureDesc(new RenderTextureDescriptor(lrWidth, lrHeight, GraphicsFormat.R8_UNorm, 0));
                 noiseDesc.name = "VHS Noise";
                 noiseDesc.clearBuffer = false;
                 vhsData.noiseTex = renderGraph.CreateTexture(noiseDesc);
